@@ -105,12 +105,17 @@ class AttentionModel(nn.Module):
 
         self.init_embed = nn.Linear(node_dim, embedding_dim)
 
-        self.embedder = GraphAttentionEncoder(
-            n_heads=n_heads,
-            embed_dim=embedding_dim,
-            n_layers=self.n_encode_layers,
-            normalization=normalization
-        )
+        # self.embedder = GraphAttentionEncoder(
+        #     n_heads=n_heads,
+        #     embed_dim=embedding_dim,
+        #     n_layers=self.n_encode_layers,
+        #     normalization=normalization
+        # )
+
+        self.embedder = self.embedder = GCN_K3_L_2(
+                n_dim=embedding_dim,
+                node_dim=4
+            )
         # self.embedder = GCAPCN_K_3_P_4_L_1(
         #     node_dim=4,
         #     n_dim=embedding_dim,

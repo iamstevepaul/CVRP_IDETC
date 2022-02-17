@@ -27,7 +27,7 @@ def get_options(args=None):
                         help='Clip the parameters to within +- this value using tanh. '
                              'Set to 0 to not perform any clipping.')
     parser.add_argument('--normalization', default='batch', help="Normalization type, 'batch' (default) or 'instance'")
-    parser.add_argument('--encoder_n', type=int, default=14,
+    parser.add_argument('--encoder_n', type=int, default=10,
                         help='Encoder_id')
 
     # Training

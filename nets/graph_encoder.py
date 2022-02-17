@@ -502,8 +502,8 @@ class GCN_K3_L_2(nn.Module):
         self.activ = nn.LeakyReLU()
 
     def forward(self, data, mask=None):
-        X = torch.cat((data['loc'], data['demand'][:, :, None]), 2)
-        X = torch.cat((X[:, :, 0:2], (X[:, :, 2] / X[:, :, 2].max())[:, :, None]), -1)
+        X = torch.cat((data['loc'], data['demand'][:, :, None], data['std'][:, :, None]), 2)
+        # X = torch.cat((X[:, :, 0:2], (X[:, :, 2] / X[:, :, 2].max())[:, :, None]), -1)
         X_loc = X
         distance_matrix = (((X_loc[:, :, None] - X_loc[:, None]) ** 2).sum(-1)) ** .5
         num_samples, num_locations, _ = X.size()
