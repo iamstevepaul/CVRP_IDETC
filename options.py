@@ -10,7 +10,7 @@ def get_options(args=None):
 
     # Data
     parser.add_argument('--problem', default='cvrp', help="The problem to solve, default 'tsp'")
-    parser.add_argument('--graph_size', type=int, default=200, help="The size of the problem graph")
+    parser.add_argument('--graph_size', type=int, default=100, help="The size of the problem graph")
     parser.add_argument('--batch_size', type=int, default=500, help='Number of instances per batch during training')
     parser.add_argument('--epoch_size', type=int, default=500000, help='Number of instances per epoch during training')
     parser.add_argument('--val_size', type=int, default=2000,
@@ -27,7 +27,7 @@ def get_options(args=None):
                         help='Clip the parameters to within +- this value using tanh. '
                              'Set to 0 to not perform any clipping.')
     parser.add_argument('--normalization', default='batch', help="Normalization type, 'batch' (default) or 'instance'")
-    parser.add_argument('--encoder_n', type=int, default=1,
+    parser.add_argument('--encoder_n', type=int, default=14,
                         help='Encoder_id')
 
     # Training

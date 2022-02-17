@@ -5,7 +5,9 @@ import math
 from typing import NamedTuple
 from utils.tensor_functions import compute_in_batches
 
-from nets.graph_encoder import GraphAttentionEncoder, CCN, CCN3, GCAPCN, GCN_K1_L_1, GCN_K2_L_1, GCN_K3_L_1, GCN_K3_L_2, GCN_K3_L_3, GCAPCN_K_3_P_4_L_3, GCAPCN_K_3_P_4_L_2, GCAPCN_K_3_P_4_L_1, GCAPCN_K_3_P_3_L_1, GCAPCN_K_3_P_2_L_1, GCAPCN_K_3_P_1_L_1, GCAPCN_K_2_P_1_L_1, GCAPCN_K_1_P_1_L_1
+from nets.graph_encoder import GraphAttentionEncoder, CCN, CCN3, GCAPCN, GCN_K1_L_1, GCN_K2_L_1, GCN_K3_L_1, GCN_K3_L_2, \
+    GCN_K3_L_3, GCAPCN_K_3_P_4_L_3, GCAPCN_K_3_P_4_L_2, GCAPCN_K_3_P_4_L_1, GCAPCN_K_3_P_3_L_1, GCAPCN_K_3_P_2_L_1, \
+    GCAPCN_K_3_P_1_L_1, GCAPCN_K_2_P_1_L_1, GCAPCN_K_1_P_1_L_1
 from torch.nn import DataParallel
 # from utils.beam_search import CachedLookup
 from utils.functions import sample_many
@@ -54,7 +56,7 @@ class AttentionModel(nn.Module):
                  n_heads=8,
                  checkpoint_encoder=False,
                  shrink_size=None,
-                 encoder_n = None):
+                 encoder_n=None):
         super(AttentionModel, self).__init__()
 
         self.embedding_dim = embedding_dim
@@ -89,112 +91,112 @@ class AttentionModel(nn.Module):
 
             # Special embedding projection for depot node
             self.init_embed_depot = nn.Linear(2, embedding_dim)
-            
+
             if self.is_vrp and self.allow_partial:  # Need to include the demand if split delivery allowed
                 self.project_node_step = nn.Linear(1, 3 * embedding_dim, bias=False)
         else:  # TSP
             assert problem.NAME == "tsp", "Unsupported problem: {}".format(problem.NAME)
             step_context_dim = 2 * embedding_dim  # Embedding of first and last node
             node_dim = 2  # x, y
-            
+
             # Learned input symbols for first action
             self.W_placeholder = nn.Parameter(torch.Tensor(2 * embedding_dim))
             self.W_placeholder.data.uniform_(-1, 1)  # Placeholder should be in range of activations
 
         self.init_embed = nn.Linear(node_dim, embedding_dim)
 
-        # self.embedder = GraphAttentionEncoder(
-        #     n_heads=n_heads,
-        #     embed_dim=embedding_dim,
-        #     n_layers=self.n_encode_layers,
-        #     normalization=normalization
-        # )
-        self.embedder = GCAPCN_K_3_P_4_L_1(
-            node_dim=4,
-            n_dim=embedding_dim,
-            n_layers=self.n_encode_layers
+        self.embedder = GraphAttentionEncoder(
+            n_heads=n_heads,
+            embed_dim=embedding_dim,
+            n_layers=self.n_encode_layers,
+            normalization=normalization
         )
+        # self.embedder = GCAPCN_K_3_P_4_L_1(
+        #     node_dim=4,
+        #     n_dim=embedding_dim,
+        #     n_layers=self.n_encode_layers
+        # )
 
         self.encoder_n = encoder_n
 
-        # if self.encoder_n == 1:
-        #
-        #     self.embedder = GCAPCN_K_3_P_4_L_3(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 2:
-        #
-        #     self.embedder = GCAPCN_K_3_P_4_L_2(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 3:
-        #
-        #     self.embedder = GCAPCN_K_3_P_4_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 4:
-        #
-        #     self.embedder = GCAPCN_K_3_P_3_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 5:
-        #
-        #     self.embedder = GCAPCN_K_3_P_2_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 6:
-        #
-        #     self.embedder = GCAPCN_K_3_P_1_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 7:
-        #
-        #     self.embedder = GCAPCN_K_2_P_1_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 8:
-        #
-        #     self.embedder = GCAPCN_K_1_P_1_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 9:
-        #
-        #     self.embedder = GCN_K3_L_3(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 10:
-        #
-        #     self.embedder = GCN_K3_L_2(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 11:
-        #
-        #     self.embedder = GCN_K3_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 12:
-        #
-        #     self.embedder = GCN_K2_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
-        # elif self.encoder_n == 13:
-        #
-        #     self.embedder = GCN_K1_L_1(
-        #         n_dim=embedding_dim,
-        #         node_dim=3
-        #     )
+        # # if self.encoder_n == 1:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_4_L_3(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 2:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_4_L_2(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 3:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_4_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 4:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_3_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 5:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_2_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 6:
+        # #
+        # #     self.embedder = GCAPCN_K_3_P_1_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 7:
+        # #
+        # #     self.embedder = GCAPCN_K_2_P_1_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 8:
+        # #
+        # #     self.embedder = GCAPCN_K_1_P_1_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 9:
+        # #
+        # #     self.embedder = GCN_K3_L_3(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 10:
+        # #
+        # #     self.embedder = GCN_K3_L_2(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 11:
+        # #
+        # #     self.embedder = GCN_K3_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 12:
+        # #
+        # #     self.embedder = GCN_K2_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
+        # # elif self.encoder_n == 13:
+        # #
+        # #     self.embedder = GCN_K1_L_1(
+        # #         n_dim=embedding_dim,
+        # #         node_dim=3
+        # #     )
         # elif self.encoder_n == 14:
         #
         #     self.embedder = GraphAttentionEncoder(
@@ -203,23 +205,22 @@ class AttentionModel(nn.Module):
         #             n_layers=3,
         #             normalization=normalization
         #         )
-        # elif self.encoder_n == 15:
-        #
-        #     self.embedder = GraphAttentionEncoder(
-        #             n_heads=n_heads,
-        #             embed_dim=embedding_dim,
-        #             n_layers=2,
-        #             normalization=normalization
-        #         )
-        # elif self.encoder_n == 16:
-        #
-        #     self.embedder = GraphAttentionEncoder(
-        #             n_heads=n_heads,
-        #             embed_dim=embedding_dim,
-        #             n_layers=1,
-        #             normalization=normalization
-        #         )
-
+        # # elif self.encoder_n == 15:
+        # #
+        # #     self.embedder = GraphAttentionEncoder(
+        # #             n_heads=n_heads,
+        # #             embed_dim=embedding_dim,
+        # #             n_layers=2,
+        # #             normalization=normalization
+        # #         )
+        # # elif self.encoder_n == 16:
+        # #
+        # #     self.embedder = GraphAttentionEncoder(
+        # #             n_heads=n_heads,
+        # #             embed_dim=embedding_dim,
+        # #             n_layers=1,
+        # #             normalization=normalization
+        # #         )
 
         # For each node we compute (glimpse key, glimpse value, logit key) so 3 * embedding_dim
         self.project_node_embeddings = nn.Linear(embedding_dim, 3 * embedding_dim, bias=False)
@@ -245,11 +246,10 @@ class AttentionModel(nn.Module):
         if self.checkpoint_encoder and self.training:  # Only checkpoint if we need gradients
             embeddings, _ = checkpoint(self.embedder, self._init_embed(input))
         else:
-            if self.encoder_n >=14:
+            if self.encoder_n >= 14:
                 embeddings, _ = self.embedder(self._init_embed(input))
             else:
                 embeddings, _ = self.embedder(input)
-
 
         _log_p, pi = self._inner(input, embeddings)
 
@@ -319,9 +319,9 @@ class AttentionModel(nn.Module):
 
         if self.is_vrp or self.is_orienteering or self.is_pctsp:
             if self.is_vrp:
-                features = ('demand', )
+                features = ('demand', 'std')
             elif self.is_orienteering:
-                features = ('prize', )
+                features = ('prize',)
             else:
                 assert self.is_pctsp
                 features = ('deterministic_prize', 'penalty')
@@ -403,7 +403,8 @@ class AttentionModel(nn.Module):
             lambda input: self._inner(*input),  # Need to unpack tuple into arguments
             lambda input, pi: self.problem.get_costs(input[0], pi),  # Don't need embeddings as input to get_costs
             # (input, self.embedder(self._init_embed(input))[0]),  # Pack input with embeddings (additional input)
-            (input, self.embedder(input)[0]) if self.encoder_n <=13 else (input, self.embedder(self._init_embed(input))[0]),
+            (input, self.embedder(input)[0]) if self.encoder_n <= 13 else (
+            input, self.embedder(self._init_embed(input))[0]),
             batch_rep, iter_rep
         )
 
@@ -486,7 +487,7 @@ class AttentionModel(nn.Module):
     def _get_parallel_step_context(self, embeddings, state, from_depot=False):
         """
         Returns the context per step, optionally for multiple steps at once (for efficient evaluation of the model)
-        
+
         :param embeddings: (batch_size, graph_size, embed_dim)
         :param prev_a: (batch_size, num_steps)
         :param first_a: Only used when num_steps = 1, action of first step or None if first step
@@ -542,7 +543,7 @@ class AttentionModel(nn.Module):
                 -1
             )
         else:  # TSP
-        
+
             if num_steps == 1:  # We need to special case if we have only 1 step, may be the first or not
                 if state.i.item() == 0:
                     # First and only step, ignore prev_a (this is a placeholder)
@@ -550,7 +551,8 @@ class AttentionModel(nn.Module):
                 else:
                     return embeddings.gather(
                         1,
-                        torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2, embeddings.size(-1))
+                        torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
+                                                                                       embeddings.size(-1))
                     ).view(batch_size, 1, -1)
             # More than one step, assume always starting with first
             embeddings_per_step = embeddings.gather(
@@ -606,7 +608,6 @@ class AttentionModel(nn.Module):
     def _get_attention_node_data(self, fixed, state):
 
         if self.is_vrp and self.allow_partial:
-
             # Need to provide information of how much each node has already been served
             # Clone demands as they are needed by the backprop whereas they are updated later
             glimpse_key_step, glimpse_val_step, logit_key_step = \
@@ -627,6 +628,6 @@ class AttentionModel(nn.Module):
 
         return (
             v.contiguous().view(v.size(0), v.size(1), v.size(2), self.n_heads, -1)
-            .expand(v.size(0), v.size(1) if num_steps is None else num_steps, v.size(2), self.n_heads, -1)
-            .permute(3, 0, 1, 2, 4)  # (n_heads, batch_size, num_steps, graph_size, head_dim)
+                .expand(v.size(0), v.size(1) if num_steps is None else num_steps, v.size(2), self.n_heads, -1)
+                .permute(3, 0, 1, 2, 4)  # (n_heads, batch_size, num_steps, graph_size, head_dim)
         )
